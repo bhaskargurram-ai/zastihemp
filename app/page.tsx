@@ -7,6 +7,7 @@ import Hero from "@/components/Hero";
 import InputArea from "@/components/InputArea";
 import SimilarTopics from "@/components/SimilarTopics";
 import Sources from "@/components/Sources";
+import Sidebar from "@/components/Sidebar";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import {
@@ -22,9 +23,23 @@ export default function Home() {
   const [sources, setSources] = useState<{ name: string; url: string }[]>([]);
   const [isLoadingSources, setIsLoadingSources] = useState(false);
   const [answer, setAnswer] = useState("");
-  const [similarQuestions, setSimilarQuestions] = useState<string[]>([]);
+  const [similarQuestions, setSimilarQuestions] = useState<{
+    marketResearch: string[];
+    sales: string[];
+    production: string[];
+  }>({ marketResearch: [], sales: [], production: [] });
+  const [category, setCategory] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Define hemp product categories and subcategories
+  const products = {
+    "Hemp Fiber": ["Textiles", "Paper", "Insulation", "Biocomposites"],
+    "Hemp Seed": ["Hemp Oil", "Hemp Protein Powder", "Hemp Snacks"],
+    "Hemp Foods": ["Hemp Milk", "Hemp Bars", "Hemp Granola"],
+    "Hemp CBD": ["CBD Oil", "CBD Capsules", "CBD Topicals"],
+    "Hemp Industrial Products": ["Hemp Plastics", "Hemp Concrete", "Hemp Biofuel"],
+  };
 
   const handleDisplayResult = async (newQuestion?: string) => {
     newQuestion = newQuestion || promptValue;
@@ -75,7 +90,6 @@ export default function Home() {
       return;
     }
 
-    // This data is a ReadableStream
     const data = response.body;
     if (!data) {
       return;
@@ -93,7 +107,6 @@ export default function Home() {
       }
     };
 
-    // https://web.dev/streams/#the-getreader-and-read-methods
     const reader = data.getReader();
     const decoder = new TextDecoder();
     const parser = createParser(onParse);
@@ -111,8 +124,19 @@ export default function Home() {
       method: "POST",
       body: JSON.stringify({ question }),
     });
-    let questions = await res.json();
-    setSimilarQuestions(questions);
+
+    if (res.ok) {
+      let data = await res.json();
+      setSimilarQuestions({
+        marketResearch: data.marketResearch || [],
+        sales: data.sales || [],
+        production: data.production || [],
+      });
+
+      // Directly use the category from the response
+      console.log("Category from backend:", data.category);  // Debugging log
+      setCategory(data.category || "");
+    }
   }
 
   const reset = () => {
@@ -121,67 +145,80 @@ export default function Home() {
     setQuestion("");
     setAnswer("");
     setSources([]);
-    setSimilarQuestions([]);
+    setSimilarQuestions({
+      marketResearch: [],
+      sales: [],
+      production: [],
+    });
+    setCategory("");
   };
 
   return (
     <>
       <Header />
-      <main className="h-full px-4 pb-4">
-        {!showResult && (
-          <Hero
-            promptValue={promptValue}
-            setPromptValue={setPromptValue}
-            handleDisplayResult={handleDisplayResult}
-          />
-        )}
+      <main className="flex h-full">
+        {question && <Sidebar category={category} products={products} />} {/* Conditionally render Sidebar */}
+        <div className="flex-1 px-4 pb-4">
+          {!showResult && (
+            <Hero
+              promptValue={promptValue}
+              setPromptValue={setPromptValue}
+              handleDisplayResult={handleDisplayResult}
+            />
+          )}
 
-        {showResult && (
-          <div className="flex h-full min-h-[68vh] w-full grow flex-col justify-between">
-            <div className="container w-full space-y-2">
-              <div className="container space-y-2">
-                <div className="container flex w-full items-start gap-3 px-5 pt-2 lg:px-10">
-                  <div className="flex w-fit items-center gap-4">
-                    <Image
-                      unoptimized
-                      src={"/img/message-question-circle.svg"}
-                      alt="message"
-                      width={30}
-                      height={30}
-                      className="size-[24px]"
-                    />
-                    <p className="pr-5 font-bold uppercase leading-[152%] text-black">
-                      Question:
-                    </p>
+          {showResult && (
+            <div className="flex h-full min-h-[68vh] w-full grow flex-col justify-between">
+              <div className="container w-full space-y-2">
+                <div className="container space-y-2">
+                  <div className="container flex w-full items-start gap-3 px-5 pt-2 lg:px-10">
+                    <div className="flex w-fit items-center gap-4">
+                      <Image
+                        unoptimized
+                        src={"/img/message-question-circle.svg"}
+                        alt="message"
+                        width={30}
+                        height={30}
+                        className="size-[24px]"
+                      />
+                      <p className="pr-5 font-bold uppercase leading-[152%] text-black">
+                        Question:
+                      </p>
+                    </div>
+                    <div className="grow">&quot;{question}&quot;</div>
                   </div>
-                  <div className="grow">&quot;{question}&quot;</div>
+                  <>
+                    {sources.length > 0 && (
+                      <div className="bg-green-700 text-white p-4 rounded-lg mb-4 flex gap-2">
+                        <Sources sources={sources} isLoading={isLoadingSources} />
+                      </div>
+                    )}
+                    <Answer answer={answer} />
+                    <SimilarTopics
+                      similarQuestions={similarQuestions}
+                      handleDisplayResult={handleDisplayResult}
+                      reset={reset}
+                      category={category}
+                    />
+                  </>
                 </div>
-                <>
-                  <Sources sources={sources} isLoading={isLoadingSources} />
-                  <Answer answer={answer} />
-                  <SimilarTopics
-                    similarQuestions={similarQuestions}
-                    handleDisplayResult={handleDisplayResult}
-                    reset={reset}
-                  />
-                </>
-              </div>
 
-              <div className="pt-1 sm:pt-2" ref={chatContainerRef}></div>
+                <div className="pt-1 sm:pt-2" ref={chatContainerRef}></div>
+              </div>
+              <div className="container px-4 lg:px-0">
+                <InputArea
+                  promptValue={promptValue}
+                  setPromptValue={setPromptValue}
+                  handleDisplayResult={handleDisplayResult}
+                  disabled={loading}
+                  reset={reset}
+                />
+              </div>
             </div>
-            <div className="container px-4 lg:px-0">
-              <InputArea
-                promptValue={promptValue}
-                setPromptValue={setPromptValue}
-                handleDisplayResult={handleDisplayResult}
-                disabled={loading}
-                reset={reset}
-              />
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </main>
-      <Footer />
+
     </>
   );
 }

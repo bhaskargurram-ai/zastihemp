@@ -2,19 +2,102 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    margin: 0px !important;
+    font-family: 'Roboto', sans-serif; /* You can choose a font that matches your design */
+  }
+}
+
+@layer components {
+  .header {
+    background-color: #4a8f62; /* Corresponding to the header color */
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+  }
+
+  .main-content {
+    background-color: #e0f7e4; /* Light green background for the main content */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+  }
+
+  .card {
+    background-color: #a3d8b8; /* Green shade for cards */
+    padding: 16px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 700px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .button {
+    background-color: #4a8f62; /* Button green shade */
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-align: center;
+    transition: background-color 0.3s ease;
+  }
+
+  .button:hover {
+    background-color: #3a704e; /* Darker shade for hover effect */
+  }
+
+  .footer {
+    background-color: #3a704e; /* Darker green for footer */
+    color: white;
+    padding: 16px;
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .footer button {
+    background-color: #4a8f62;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+  }
+
+  .footer button:hover {
+    background-color: #2a4f3a; /* Even darker on hover */
+  }
+
+  .suggested-questions {
+    margin-top: 16px;
+    padding: 16px;
+    background-color: #e0f7e4;
+    border-radius: 8px;
+  }
+
+  .question-input {
+    margin-bottom: 8px;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #4a8f62; /* Border color matching theme */
+    width: 100%;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
-  /* Hide scrollbar for Chrome, Safari and Opera */
+
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
-  /* Hide scrollbar for IE, Edge and Firefox */
+
   .no-scrollbar {
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
   }
+
   .loader {
     text-align: left;
     display: flex;
@@ -26,7 +109,6 @@
     vertical-align: middle;
     width: 7px;
     height: 7px;
-    /* background: #4b4b4b; */
     background: white;
     border-radius: 50%;
     animation: loader 0.6s infinite alternate;
@@ -51,8 +133,4 @@
       transform: scale(1);
     }
   }
-}
-
-body {
-  margin: 0px !important;
 }

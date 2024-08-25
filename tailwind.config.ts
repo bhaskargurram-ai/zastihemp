@@ -17,6 +17,18 @@ const config: Config = {
       center: true,
     },
     extend: {
+      colors: {
+        green: {
+          100: '#e0f7e4', // light green background
+          200: '#d3f0d1', // lighter green for hover states or accents
+          300: '#a3d8b8', // main content background
+          400: '#8cc69d', // buttons and accents
+          500: '#73b284', // intermediate shade for various uses
+          600: '#4a8f62', // header background
+          700: '#3a704e', // footer background
+          800: '#2a4f3a', // dark green for buttons
+        },
+      },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'custom-gradient':
@@ -24,8 +36,15 @@ const config: Config = {
         'gradient-conic':
           'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
       },
+      borderRadius: {
+        'md': '8px',
+        'lg': '12px',
+        'xl': '16px',
+        '2xl': '24px',
+      },
     },
   },
   plugins: [],
 };
+
 export default config;

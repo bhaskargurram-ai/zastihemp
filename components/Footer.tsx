@@ -14,7 +14,7 @@ const Footer = () => {
             height={30}
           />
           <span className="text-base font-medium leading-[normal]">
-            TurboSeek.io
+            Zasti.Ai
           </span>
         </a>
         <div className="flex items-center gap-3">

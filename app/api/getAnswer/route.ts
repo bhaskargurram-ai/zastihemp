@@ -6,6 +6,7 @@ import {
 } from "@/utils/TogetherAIStream";
 import Together from "together-ai";
 
+// Initialize Together API client
 const together = new Together({
   apiKey: process.env["TOGETHER_API_KEY"],
   baseURL: "https://together.helicone.ai/v1",
@@ -19,11 +20,12 @@ export const maxDuration = 45;
 export async function POST(request: Request) {
   let { question, sources } = await request.json();
 
-  console.log("[getAnswer] Fetching text from source URLS");
+  console.log("[getAnswer] Fetching text from source URLs");
+
+  // Fetching content from source URLs
   let finalResults = await Promise.all(
     sources.map(async (result: any) => {
       try {
-        // Fetch the source URL, or abort if it's been 3 seconds
         const response = await fetchWithTimeout(result.url);
         const html = await response.text();
         const virtualConsole = new jsdom.VirtualConsole();
@@ -31,39 +33,53 @@ export async function POST(request: Request) {
 
         const doc = dom.window.document;
         const parsed = new Readability(doc).parse();
-        let parsedContent = parsed
-          ? cleanedText(parsed.textContent)
-          : "Nothing found";
+        let parsedContent = parsed ? cleanedText(parsed.textContent) : "Nothing found";
 
         return {
           ...result,
           fullContent: parsedContent,
         };
       } catch (e) {
-        console.log(`error parsing ${result.name}, error: ${e}`);
+        console.log(`Error parsing ${result.name}, error: ${e}`);
         return {
           ...result,
           fullContent: "not available",
         };
       }
-    }),
+    })
   );
 
-  const mainAnswerPrompt = `
-  Given a user question and some context, please write a clean, concise and accurate answer to the question based on the context. You will be given a set of related contexts to the question, each starting with a reference number like [[citation:x]], where x is a number. Please use the context when crafting your answer.
+  // Debugging: Log the results to ensure proper fetching
+  console.log("[getAnswer] Fetched and processed sources:", finalResults);
 
-  Your answer must be correct, accurate and written by an expert using an unbiased and professional tone. Please limit to 1024 tokens. Do not give any information that is not related to the question, and do not repeat. Say "information is missing on" followed by the related topic, if the given context do not provide sufficient information.
+  // Dynamic Category Detection
+  const categories = ["Hemp Seed", "Hemp Fiber", "Hemp Foods", "Hemp CBD", "Hemp Industrial Products"];
+  let detectedCategory = "General"; // Default category
+
+  for (let category of categories) {
+    if (question.toLowerCase().includes(category.toLowerCase().split(" ")[1])) {
+      detectedCategory = category;
+      break;
+    }
+  }
+
+  // Prepare the sources for the prompt without explicit citations
+  const contextText = finalResults.map(
+    (result) => `${result.fullContent} \n\n`
+  ).join('');
+
+  const mainAnswerPrompt = `
+  You are a hemp sustainability expert. Based on the information provided in the following contexts, write a detailed and accurate answer to the user's question. Your response should be clear and informative, focusing on providing expert advice on hemp sustainability without referencing the sources or mentioning any citations.
 
   Here are the set of contexts:
+  ${contextText}
 
-  <contexts>
-  ${finalResults.map(
-    (result, index) => `[[citation:${index}]] ${result.fullContent} \n\n`,
-  )}
-  </contexts>
+  Here is the user question:
+  ${question}
+  `;
 
-  Remember, don't blindly repeat the contexts verbatim and don't tell the user how you used the citations – just respond with the answer. It is very important for my career that you follow these instructions. Here is the user question:
-    `;
+  // Log the prompt for debugging purposes
+  console.log("[getAnswer] Generated prompt:", mainAnswerPrompt);
 
   try {
     const payload: TogetherAIStreamPayload = {
@@ -78,21 +94,18 @@ export async function POST(request: Request) {
       stream: true,
     };
 
-    console.log(
-      "[getAnswer] Fetching answer stream from Together API using text and question",
-    );
+    console.log("[getAnswer] Fetching answer stream from Together API using text and question");
     const stream = await TogetherAIStream(payload);
-    // TODO: Need to add error handling here, since a non-200 status code doesn't throw.
+
+    // Attach category to the stream response in headers
     return new Response(stream, {
       headers: new Headers({
         "Cache-Control": "no-cache",
+        "X-Category": detectedCategory, // Custom header for category
       }),
     });
   } catch (e) {
-    // If for some reason streaming fails, we can just call it without streaming
-    console.log(
-      "[getAnswer] Answer stream failed. Try fetching non-stream answer.",
-    );
+    console.log("[getAnswer] Answer stream failed. Try fetching non-stream answer.");
     let answer = await together.chat.completions.create({
       model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
       messages: [
@@ -106,7 +119,14 @@ export async function POST(request: Request) {
 
     let parsedAnswer = answer.choices![0].message?.content;
     console.log("Error is: ", e);
-    return new Response(parsedAnswer, { status: 202 });
+
+    // Return the answer with the category
+    return new Response(JSON.stringify({ answer: parsedAnswer, category: detectedCategory }), {
+      status: 202,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
   }
 }
 
@@ -123,25 +143,22 @@ const cleanedText = (text: string) => {
 };
 
 async function fetchWithTimeout(url: string, options = {}, timeout = 3000) {
-  // Create an AbortController
   const controller = new AbortController();
   const { signal } = controller;
 
-  // Set a timeout to abort the fetch
   const fetchTimeout = setTimeout(() => {
     controller.abort();
   }, timeout);
 
-  // Start the fetch request with the abort signal
   return fetch(url, { ...options, signal })
     .then((response) => {
-      clearTimeout(fetchTimeout); // Clear the timeout if the fetch completes in time
+      clearTimeout(fetchTimeout);
       return response;
     })
     .catch((error) => {
       if (error.name === "AbortError") {
         throw new Error("Fetch request timed out");
       }
-      throw error; // Re-throw other errors
+      throw error;
     });
 }

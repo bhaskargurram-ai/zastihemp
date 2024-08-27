@@ -1,10 +1,7 @@
-import { Readability } from "@mozilla/readability";
-import jsdom, { JSDOM } from "jsdom";
-import {
-  TogetherAIStream,
-  TogetherAIStreamPayload,
-} from "@/utils/TogetherAIStream";
+import { TogetherAIStream, TogetherAIStreamPayload } from "@/utils/TogetherAIStream";
 import Together from "together-ai";
+import { encodeChat } from "gpt-tokenizer/model/gpt-3.5-turbo";
+import { ChatMessage } from "gpt-tokenizer/GptEncoding";
 
 // Initialize Together API client
 const together = new Together({
@@ -15,150 +12,83 @@ const together = new Together({
   },
 });
 
-export const maxDuration = 45;
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
-  let { question, sources } = await request.json();
+  let { question } = await request.json();
 
-  console.log("[getAnswer] Fetching text from source URLs");
+  console.log("[getAnswer] Generating answer directly from question");
 
-  // Fetching content from source URLs
-  let finalResults = await Promise.all(
-    sources.map(async (result: any) => {
-      try {
-        const response = await fetchWithTimeout(result.url);
-        const html = await response.text();
-        const virtualConsole = new jsdom.VirtualConsole();
-        const dom = new JSDOM(html, { virtualConsole });
-
-        const doc = dom.window.document;
-        const parsed = new Readability(doc).parse();
-        let parsedContent = parsed ? cleanedText(parsed.textContent) : "Nothing found";
-
-        return {
-          ...result,
-          fullContent: parsedContent,
-        };
-      } catch (e) {
-        console.log(`Error parsing ${result.name}, error: ${e}`);
-        return {
-          ...result,
-          fullContent: "not available",
-        };
-      }
-    })
-  );
-
-  // Debugging: Log the results to ensure proper fetching
-  console.log("[getAnswer] Fetched and processed sources:", finalResults);
-
-  // Dynamic Category Detection
-  const categories = ["Hemp Seed", "Hemp Fiber", "Hemp Foods", "Hemp CBD", "Hemp Industrial Products"];
-  let detectedCategory = "General"; // Default category
-
-  for (let category of categories) {
-    if (question.toLowerCase().includes(category.toLowerCase().split(" ")[1])) {
-      detectedCategory = category;
-      break;
-    }
-  }
-
-  // Prepare the sources for the prompt without explicit citations
-  const contextText = finalResults.map(
-    (result) => `${result.fullContent} \n\n`
-  ).join('');
-
+  // Construct initial prompt with just the question
   const mainAnswerPrompt = `
-  You are a hemp sustainability expert. Based on the information provided in the following contexts, write a detailed and accurate answer to the user's question. Your response should be clear and informative, focusing on providing expert advice on hemp sustainability without referencing the sources or mentioning any citations.
+  You are an expert in industrial hemp. Your job is to provide detailed, accurate, and specific answers strictly about industrial hemp. This includes information about hemp fiber, hemp seeds, and hemp-based industrial products. 
 
-  Here are the set of contexts:
-  ${contextText}
+  Please note:
+  - Do not provide any information related to medical hemp, CBD, or any other cannabinoid-related products.
+  - If the question pertains to medicinal hemp or any topic outside of industrial hemp, simply state: "I only have information on industrial hemp. Please ask questions related to industrial hemp."
+  - Avoid any mention of being an AI model or discussing AI capabilities.
 
-  Here is the user question:
+  Here is the user's question:
   ${question}
   `;
 
-  // Log the prompt for debugging purposes
-  console.log("[getAnswer] Generated prompt:", mainAnswerPrompt);
+  let messages: ChatMessage[] = [
+    { role: "system", content: mainAnswerPrompt },
+    { role: "user", content: question },
+  ];
+
+  let chatTokens = encodeChat(messages);
+
+  // Check token length and truncate if necessary
+  const maxTokens = 32768;
+  const maxNewTokens = 1024;
+  const maxInputTokens = maxTokens - maxNewTokens;
+
+  if (chatTokens.length > maxInputTokens) {
+    console.log("[getAnswer] Truncating prompt to fit within token limits.");
+    // Dynamically reduce prompt length until token limit is satisfied
+    while (chatTokens.length > maxInputTokens && mainAnswerPrompt.length > 0) {
+      messages[0].content = mainAnswerPrompt.slice(0, -1000); // Remove last 1000 characters
+      chatTokens = encodeChat(messages);
+    }
+  }
 
   try {
     const payload: TogetherAIStreamPayload = {
-      model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
-      messages: [
-        { role: "system", content: mainAnswerPrompt },
-        {
-          role: "user",
-          content: question,
-        },
-      ],
+      model: "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
+      messages,
       stream: true,
     };
 
     console.log("[getAnswer] Fetching answer stream from Together API using text and question");
     const stream = await TogetherAIStream(payload);
-
-    // Attach category to the stream response in headers
     return new Response(stream, {
       headers: new Headers({
         "Cache-Control": "no-cache",
-        "X-Category": detectedCategory, // Custom header for category
       }),
     });
   } catch (e) {
-    console.log("[getAnswer] Answer stream failed. Try fetching non-stream answer.");
-    let answer = await together.chat.completions.create({
-      model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
-      messages: [
-        { role: "system", content: mainAnswerPrompt },
+    console.log("[getAnswer] Answer stream failed. Attempting to fetch non-stream answer.");
+    try {
+      let answer = await together.chat.completions.create({
+        model: "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
+        messages,
+      });
+
+      let parsedAnswer = answer.choices![0].message?.content;
+      console.log("Error is: ", e);
+      return new Response(parsedAnswer, { status: 202 });
+    } catch (error) {
+      console.error("[getAnswer] Error fetching non-stream answer:", error);
+
+      // Return a fallback response in case of error
+      return new Response(
+        JSON.stringify({ answer: "I only have information on industrial hemp. Please ask questions related to industrial hemp." }),
         {
-          role: "user",
-          content: question,
-        },
-      ],
-    });
-
-    let parsedAnswer = answer.choices![0].message?.content;
-    console.log("Error is: ", e);
-
-    // Return the answer with the category
-    return new Response(JSON.stringify({ answer: parsedAnswer, category: detectedCategory }), {
-      status: 202,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
   }
-}
-
-const cleanedText = (text: string) => {
-  let newText = text
-    .trim()
-    .replace(/(\n){4,}/g, "\n\n\n")
-    .replace(/\n\n/g, " ")
-    .replace(/ {3,}/g, "  ")
-    .replace(/\t/g, "")
-    .replace(/\n+(\s*\n)*/g, "\n");
-
-  return newText.substring(0, 20000);
-};
-
-async function fetchWithTimeout(url: string, options = {}, timeout = 3000) {
-  const controller = new AbortController();
-  const { signal } = controller;
-
-  const fetchTimeout = setTimeout(() => {
-    controller.abort();
-  }, timeout);
-
-  return fetch(url, { ...options, signal })
-    .then((response) => {
-      clearTimeout(fetchTimeout);
-      return response;
-    })
-    .catch((error) => {
-      if (error.name === "AbortError") {
-        throw new Error("Fetch request timed out");
-      }
-      throw error;
-    });
 }

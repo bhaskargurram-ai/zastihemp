@@ -20,7 +20,7 @@
   }
 
   .main-content {
-    background-color: #e0f7e4; /* Light green background for the main content */
+    background-color:#2F5F34; /* Light green background for the main content */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -28,7 +28,7 @@
   }
 
   .card {
-    background-color: #a3d8b8; /* Green shade for cards */
+    background-color: #2F5F34; /* Green shade for cards */
     padding: 16px;
     border-radius: 12px;
     width: 100%;
@@ -79,7 +79,7 @@
     margin-bottom: 8px;
     padding: 8px;
     border-radius: 8px;
-    border: 1px solid #4a8f62; /* Border color matching theme */
+    border: 1px solid #8bc349; /* Border color matching theme */
     width: 100%;
   }
 }

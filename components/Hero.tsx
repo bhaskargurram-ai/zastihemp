@@ -18,11 +18,29 @@ const Hero: FC<THeroProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center">
+    <div className="relative flex flex-col items-center justify-center w-full h-full">
+      {/* Semi-transparent green overlay to improve text visibility */}
+      <div className="absolute inset-0 bg-green-900 opacity-90"></div>
+
+      <h2 className="relative pb-7 pt-2 text-center text-white font-semibold leading-[normal] lg:text-[35px] text-shadow-lg">
+        Ask me anything about Industrial Hemp!
+      </h2>
+
+      {/* Input section */}
+      <div className="relative z-10 w-full max-w-[708px] pb-6">
+        <InputArea
+          promptValue={promptValue}
+          setPromptValue={setPromptValue}
+          handleDisplayResult={handleDisplayResult}
+        />
+      </div>
+
+      {/* Powered by Atom AI section moved below the input box */}
       <a
-        className="mb-4 inline-flex h-7 shrink-0 items-center gap-[9px] rounded-[50px] border-[0.5px] border-solid border-[#E6E6E6] bg-white px-3 py-4 shadow-[0px_1px_1px_0px_rgba(0,0,0,0.25)]"
+        className="relative z-10 mt-4 inline-flex h-7 items-center gap-[9px] rounded-[50px] border-[0.5px] border-solid border-[#E6E6E6] bg-white px-3 py-4 shadow-[0px_1px_1px_0px_rgba(0,0,0,0.25)]"
         href="https://www.Zasti.ai/"
         target="_blank"
+        rel="noopener noreferrer" // Security best practice for external links
       >
         <Image
           unoptimized
@@ -35,21 +53,9 @@ const Hero: FC<THeroProps> = ({
           Powered by Atom AI
         </span>
       </a>
-      <h2 className="bg-custom-gradient bg-clip-text pb-7 pt-2 text-center text-3xl font-semibold leading-[normal] lg:text-[64px]">
-        Search smarter & faster
-      </h2>
-
-      {/* input section */}
-      <div className="w-full max-w-[708px] pb-6">
-        <InputArea
-          promptValue={promptValue}
-          setPromptValue={setPromptValue}
-          handleDisplayResult={handleDisplayResult}
-        />
-      </div>
 
       {/* Suggestions section */}
-      <div className="flex flex-wrap items-center justify-center gap-2.5 pb-[30px] lg:flex-nowrap lg:justify-normal">
+      <div className="relative z-10 flex flex-wrap items-center justify-center gap-2.5 pb-[30px] lg:flex-nowrap lg:justify-normal">
         {suggestions.map((item) => (
           <div
             className="flex h-[35px] cursor-pointer items-center justify-center gap-[5px] rounded border border-solid border-[#C1C1C1] bg-[#EDEDEA] px-2.5 py-2"
@@ -70,8 +76,6 @@ const Hero: FC<THeroProps> = ({
           </div>
         ))}
       </div>
-
-     
     </div>
   );
 };
@@ -83,21 +87,7 @@ type suggestionType = {
 };
 
 const suggestions: suggestionType[] = [
-  {
-    id: 1,
-    name: "How to boost hemp sales?",
-    icon: "/img/icon _leaf_.svg",
-  },
-  {
-    id: 2,
-    name: "Best ways to grow hemp?",
-    icon: "/img/icon _dumbell_.svg",
-  },
-  {
-    id: 3,
-    name: "What’s the demand for hemp products?",
-    icon: "/img/icon _atom_.svg",
-  },
+  // Add suggestion objects here
 ];
 
 export default Hero;

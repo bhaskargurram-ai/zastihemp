@@ -16,7 +16,8 @@ const SimilarTopics = ({
   category: string;
 }) => {
   // Normalize category for consistent comparison
-  const normalizeCategory = (cat: string) => cat.toLowerCase().replace(/\s+/g, "");
+  const normalizeCategory = (cat: string) =>
+    cat.toLowerCase().replace(/\s+/g, "");
 
   // Map backend category to front-end category names
   const categoryMap: { [key: string]: string } = {
@@ -29,18 +30,20 @@ const SimilarTopics = ({
 
   // Determine which container should be highlighted
   const getCategoryClass = (currentCategory: string) => {
-    const normalizedCategory = normalizeCategory(categoryMap[category.toLowerCase()] || category);
+    const normalizedCategory = normalizeCategory(
+      categoryMap[category.toLowerCase()] || category
+    );
     return normalizeCategory(currentCategory) === normalizedCategory
-      ? "bg-blue-100 border-blue-500"  // Highlighted style
+      ? "bg-blue-100 border-blue-500" // Highlighted style
       : "bg-white";
   };
 
   return (
-    <div className="flex gap-4">
+    <div className="flex justify-center gap-6 px-6"> {/* Increased gap and padding */}
       <div
-        className={`container flex flex-col h-auto w-1/3 shrink-0 gap-4 rounded-lg border border-solid ${getCategoryClass(
+        className={`flex flex-col h-auto w-1/4 shrink-0 gap-4 rounded-lg border border-solid ${getCategoryClass(
           "market research"
-        )} p-5 lg:p-10`}
+        )} p-5 lg:p-8`}
       >
         <div className="flex gap-4 pb-3">
           <Image
@@ -90,9 +93,9 @@ const SimilarTopics = ({
         </div>
       </div>
       <div
-        className={`container flex flex-col h-auto w-1/3 shrink-0 gap-4 rounded-lg border border-solid ${getCategoryClass(
+        className={`flex flex-col h-auto w-1/4 shrink-0 gap-4 rounded-lg border border-solid ${getCategoryClass(
           "sales"
-        )} p-5 lg:p-10`}
+        )} p-5 lg:p-8`}
       >
         <div className="flex gap-4 pb-3">
           <Image
@@ -140,9 +143,9 @@ const SimilarTopics = ({
         </div>
       </div>
       <div
-        className={`container flex flex-col h-auto w-1/3 shrink-0 gap-4 rounded-lg border border-solid ${getCategoryClass(
+        className={`flex flex-col h-auto w-1/4 shrink-0 gap-4 rounded-lg border border-solid ${getCategoryClass(
           "production"
-        )} p-5 lg:p-10`}
+        )} p-5 lg:p-8`}
       >
         <div className="flex gap-4 pb-3">
           <Image

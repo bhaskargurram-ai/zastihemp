@@ -2,10 +2,15 @@ import Image from "next/image";
 
 const Header = () => {
   return (
-    <div className="container h-[80px] px-4 lg:h-[80px] lg:px-0">
-      <div className="flex h-full items-center justify-between">
+    <div
+      className="w-full h-[134px] flex-shrink-0"
+      style={{
+        background: "linear-gradient(90deg, #0F4214 13.5%, #26A834 100%)",
+      }}
+    >
+      <div className="relative w-full h-full flex items-center justify-between px-4 lg:px-8">
         {/* Left Logo */}
-        <div className="flex items-center justify-start">
+        <div className="flex items-center">
           <a href="/">
             <Image
               unoptimized
@@ -18,21 +23,31 @@ const Header = () => {
           </a>
         </div>
 
-        {/* Bot Name in the Center */}
-        <div className="flex-grow text-center">
-          <h1 className="text-2xl font-bold lg:text-3xl text-green">HempChat</h1>
+        {/* Title with PNG Clipart */}
+        <div className="flex items-center text-center">
+          {/* Clipart Image */}
+          <Image
+            unoptimized
+            src="/img/clipart.png"  // Path to your PNG clipart
+            alt="clipart"
+            width={40}  // Adjust width as needed
+            height={40} // Adjust height as needed
+            className="h-[30px] w-auto lg:h-[30px] mr-2"  // Margin for spacing between the clipart and text
+          />
+          {/* Bot Name */}
+          <h1 className="text-2xl font-bold lg:text-3xl text-white">Hemp Copilot</h1>
         </div>
 
         {/* Right Logo */}
-        <div className="flex items-center justify-end">
+        <div className="flex items-center">
           <a href="/">
             <Image
               unoptimized
-              src="/img/R.svg"
+              src="/img/indhemp.png"
               alt="right logo"
-              width={80}
-              height={80}
-              className="h-[50px] w-auto lg:h-[50px]"
+              width={120}  // Increased width for a bigger size
+              height={120} // Increased height for a bigger size
+              className="h-[70px] w-auto lg:h-[70px]" // Adjust height as needed
             />
           </a>
         </div>

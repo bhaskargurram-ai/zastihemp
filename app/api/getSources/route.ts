@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-let excludedSites = ["youtube.com"];
+// Specify sites to include for reliable sources
+let includedSites = ["site:gov", "site:edu", "site:springer.com", "site:researchgate.net", "site:jstor.org"];
 
 let searchEngine: "bing" | "serper" = "serper";
 
 export async function POST(request: Request) {
   let { question } = await request.json();
+
+  // Construct the site inclusion filter
+  const siteFilter = includedSites.join(" OR ");
 
   if (searchEngine === "bing") {
     const BING_API_KEY = process.env["BING_API_KEY"];
@@ -15,7 +19,7 @@ export async function POST(request: Request) {
     }
 
     const params = new URLSearchParams({
-      q: `${question} ${excludedSites.map((site) => `-site:${site}`).join(" ")}`,
+      q: `${question} ${siteFilter}`,
       mkt: "en-US",
       count: "6",
       safeSearch: "Strict",
@@ -28,7 +32,7 @@ export async function POST(request: Request) {
         headers: {
           "Ocp-Apim-Subscription-Key": BING_API_KEY,
         },
-      },
+      }
     );
 
     const BingJSONSchema = z.object({
@@ -59,7 +63,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        q: question,
+        q: `${question} ${siteFilter}`,
         num: 6,
       }),
     });

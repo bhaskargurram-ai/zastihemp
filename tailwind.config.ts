@@ -25,8 +25,9 @@ const config: Config = {
           400: '#8cc69d', // buttons and accents
           500: '#73b284', // intermediate shade for various uses
           600: '#4a8f62', // header background
-          700: '#3a704e', // footer background
-          800: '#2a4f3a', // dark green for buttons
+          700: '#8bc349', // footer background
+          800: '#2F5F34'
+    , // dark green for buttons
         },
       },
       backgroundImage: {

@@ -37,13 +37,9 @@ const Sidebar: React.FC<SidebarProps> = ({ category, subcategory, products, high
     setOpenSubCategory(openSubCategory === subCat ? null : subCat);
   };
 
-  const navigateToComparison = (product: string, parentCategory: string, subCategory?: string) => {
+  const navigateToComparison = (product: string) => {
     const queryParams = new URLSearchParams();
-    queryParams.append("product", product);
-    queryParams.append("category", parentCategory);
-    if (subCategory) {
-      queryParams.append("subcategory", subCategory);
-    }
+    queryParams.append("product", product); // Only append the clicked product
 
     router.push(`/ProductComparison?${queryParams.toString()}`);
   };
@@ -74,7 +70,7 @@ const Sidebar: React.FC<SidebarProps> = ({ category, subcategory, products, high
                         items.map((product: string) => (
                           <li key={product}>
                             <button
-                              onClick={() => navigateToComparison(product, prodCategory)}
+                              onClick={() => navigateToComparison(product)}
                               className={`block text-sm p-2 hover:bg-yellow-400 hover:text-black w-full text-left ${
                                 highlightProduct === product ? "bg-red-500 text-white" : ""
                               }`} // Apply highlight style if product matches
@@ -104,7 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({ category, subcategory, products, high
                                       <li key={innerProduct}>
                                         <button
                                           onClick={() =>
-                                            navigateToComparison(innerProduct, prodCategory, innerSubCategory)
+                                            navigateToComparison(innerProduct)
                                           }
                                           className={`block text-sm p-2 hover:bg-yellow-400 hover:text-black w-full text-left ${
                                             highlightProduct === innerProduct ? "bg-red-500 text-white" : ""

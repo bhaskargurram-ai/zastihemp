@@ -21,8 +21,8 @@ const SimilarTopics = ({
 
   // Map backend category to front-end category names
   const categoryMap: { [key: string]: string } = {
-    "hemp seed": "market research",
-    "hemp fiber": "sales",
+    "hemp seed": "sales",
+    "hemp fiber": "market research",
     "hemp foods": "production",
     "hemp cbd": "sales",
     "hemp industrial products": "production",
